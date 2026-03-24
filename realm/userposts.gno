@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"gno.land/p/moul/txlink"
-	"gno.land/p/nt/avl"
-	"gno.land/p/nt/ufmt"
+	"gno.land/p/nt/avl/v0"
+	"gno.land/p/nt/ufmt/v0"
 	"gno.land/r/sys/users"
 )
 
@@ -114,8 +114,8 @@ func (userPosts *UserPosts) RenderUserPosts(includeFollowed bool) string {
 	following := "Following " + strconv.Itoa(userPosts.following.Size())
 	user := users.ResolveAddress(userPosts.userAddr)
 	if user != nil {
-		followers = "[" + followers + "](/r/berty/social:" + user.Name() + "/followers)"
-		following = "[" + following + "](/r/berty/social:" + user.Name() + "/following)"
+		followers = "[" + followers + "](" + gRealmPath + ":" + user.Name() + "/followers)"
+		following = "[" + following + "](" + gRealmPath + ":" + user.Name() + "/following)"
 	}
 	str += followers + " &nbsp;" + following + "\n\n"
 
@@ -144,7 +144,7 @@ func (userPosts *UserPosts) RenderFollowers() string {
 	str := ""
 	user := users.ResolveAddress(userPosts.userAddr)
 	if user != nil {
-		str += "[@" + user.Name() + "](/r/berty/social:" + user.Name() + ") "
+		str += "[@" + user.Name() + "](" + gRealmPath + ":" + user.Name() + ") "
 	}
 	str += "Followers\n\n"
 
@@ -158,7 +158,7 @@ func (userPosts *UserPosts) RenderFollowers() string {
 	})
 	sort.Strings(names)
 	for _, name := range names {
-		str += " * [@" + name + "](/r/berty/social:" + name + ")" + "\n"
+		str += " * [@" + name + "](" + gRealmPath + ":" + name + ")" + "\n"
 	}
 
 	return str
@@ -168,7 +168,7 @@ func (userPosts *UserPosts) RenderFollowing() string {
 	str := ""
 	user := users.ResolveAddress(userPosts.userAddr)
 	if user != nil {
-		str += "[@" + user.Name() + "](/r/berty/social:" + user.Name() + ") "
+		str += "[@" + user.Name() + "](" + gRealmPath + ":" + user.Name() + ") "
 	}
 	str += "Following\n\n"
 
@@ -187,7 +187,7 @@ func (userPosts *UserPosts) RenderFollowing() string {
 		name := parts[0]
 		addr := parts[1]
 		since := parts[2]
-		str += " * [@" + name + "](/r/berty/social:" + name + ") since " + since +
+		str += " * [@" + name + "](" + gRealmPath + ":" + name + ") since " + since +
 			"  \\[[unfollow](" + userPosts.GetUnfollowFormURL(address(addr)) + ")]\n"
 	}
 
