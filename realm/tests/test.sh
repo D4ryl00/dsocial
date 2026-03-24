@@ -27,14 +27,17 @@ echo ""
 # ── Setup: import funder key ──────────────────────────────────────────────────
 echo "--- Setup: importing keys ---"
 
-import_key "$TEST1_NAME" "$TEST1_MNEMONIC" > /dev/null
+OUT=$(import_key "$TEST1_NAME" "$TEST1_MNEMONIC") \
+    || { echo "[FAIL] could not import test1 key: $OUT" >&2; exit 1; }
 ok "test1 imported  ($TEST1_ADDR)"
 
-ALICE_ADDR=$(generate_key "$ALICE_NAME")
+ALICE_ADDR=$(generate_key "$ALICE_NAME") \
+    || { echo "[FAIL] could not generate alice key" >&2; exit 1; }
 [ -n "$ALICE_ADDR" ] && ok "alice generated ($ALICE_ADDR) as $ALICE_NAME" \
                      || { echo "[FAIL] could not generate alice key" >&2; exit 1; }
 
-BOB_ADDR=$(generate_key "$BOB_NAME")
+BOB_ADDR=$(generate_key "$BOB_NAME") \
+    || { echo "[FAIL] could not generate bob key" >&2; exit 1; }
 [ -n "$BOB_ADDR" ]   && ok "bob generated   ($BOB_ADDR) as $BOB_NAME" \
                      || { echo "[FAIL] could not generate bob key" >&2; exit 1; }
 

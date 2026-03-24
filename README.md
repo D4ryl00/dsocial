@@ -86,7 +86,7 @@ Then deploy with `gnokey`:
 | `NODE_ADDR` | `http://localhost:26657`  | RPC endpoint        |
 | `PKG_PATH`  | `gno.land/r/berty/social` | Deployed realm path |
 
-Example for test12:
+Example for a remote chain:
 
     CHAIN_ID=test12 \
     NODE_ADDR=http://test12.example.org:26657 \

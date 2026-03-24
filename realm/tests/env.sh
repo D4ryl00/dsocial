@@ -52,7 +52,8 @@ generate_key() {
             --nobackup \
             "$name" 2>&1)
     # Parse: "* name (local) - addr: g1xxx pub: ..."
-    echo "$out" | grep -oE 'addr: g1[a-z0-9]+' | awk '{print $2}'
+    # Use || true so a grep non-match (no addr line) doesn't trigger set -e.
+    echo "$out" | grep -oE 'addr: g1[a-z0-9]+' | awk '{print $2}' || true
 }
 
 # ── Register helper ───────────────────────────────────────────────────────────
