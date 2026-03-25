@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"gno.land/p/moul/txlink"
-	"gno.land/p/nt/avl"
-	"gno.land/p/nt/ufmt"
+	"gno.land/p/nt/avl/v0"
+	"gno.land/p/nt/ufmt/v0"
 	"gno.land/r/sys/users"
 )
 
@@ -113,10 +113,12 @@ func (userPosts *UserPosts) RenderUserPosts(includeFollowed bool) string {
 	followers := strconv.Itoa(userPosts.followers.Size()) + " Followers"
 	following := "Following " + strconv.Itoa(userPosts.following.Size())
 	user := users.ResolveAddress(userPosts.userAddr)
+	nameOrAddr := userPosts.userAddr.String()
 	if user != nil {
-		followers = "[" + followers + "](/r/berty/social:" + user.Name() + "/followers)"
-		following = "[" + following + "](/r/berty/social:" + user.Name() + "/following)"
+		nameOrAddr = user.Name()
 	}
+	followers = "[" + followers + "](" + gRealmPath + ":" + nameOrAddr + "/followers)"
+	following = "[" + following + "](" + gRealmPath + ":" + nameOrAddr + "/following)"
 	str += followers + " &nbsp;" + following + "\n\n"
 
 	str += "\\[[post](" + userPosts.GetPostFormURL() + ")] \\[[follow](" + userPosts.GetFollowFormURL() + ")]"
@@ -143,22 +145,25 @@ func (userPosts *UserPosts) RenderUserPosts(includeFollowed bool) string {
 func (userPosts *UserPosts) RenderFollowers() string {
 	str := ""
 	user := users.ResolveAddress(userPosts.userAddr)
+	ownerRef := userPosts.userAddr.String()
 	if user != nil {
-		str += "[@" + user.Name() + "](/r/berty/social:" + user.Name() + ") "
+		ownerRef = user.Name()
 	}
-	str += "Followers\n\n"
+	str += "[@" + ownerRef + "](" + gRealmPath + ":" + ownerRef + ") Followers\n\n"
 
-	// List the followers, sorted by name.
+	// List the followers, sorted by name/addr.
 	names := []string{}
 	userPosts.followers.Iterate("", "", func(key string, value interface{}) bool {
-		if user := users.ResolveAddress(address(key)); user != nil {
-			names = append(names, user.Name())
+		if u := users.ResolveAddress(address(key)); u != nil {
+			names = append(names, u.Name())
+		} else {
+			names = append(names, key)
 		}
 		return false
 	})
 	sort.Strings(names)
 	for _, name := range names {
-		str += " * [@" + name + "](/r/berty/social:" + name + ")" + "\n"
+		str += " * [@" + name + "](" + gRealmPath + ":" + name + ")" + "\n"
 	}
 
 	return str
@@ -167,18 +172,21 @@ func (userPosts *UserPosts) RenderFollowers() string {
 func (userPosts *UserPosts) RenderFollowing() string {
 	str := ""
 	user := users.ResolveAddress(userPosts.userAddr)
+	ownerRef := userPosts.userAddr.String()
 	if user != nil {
-		str += "[@" + user.Name() + "](/r/berty/social:" + user.Name() + ") "
+		ownerRef = user.Name()
 	}
-	str += "Following\n\n"
+	str += "[@" + ownerRef + "](" + gRealmPath + ":" + ownerRef + ") Following\n\n"
 
 	// List the following, sorted by name/addr.
 	nameAddrs := []string{}
 	userPosts.following.Iterate("", "", func(addr string, infoI interface{}) bool {
 		info := infoI.(*FollowingInfo)
-		if user := users.ResolveAddress(address(addr)); user != nil {
-			nameAddrs = append(nameAddrs, user.Name()+"/"+addr+"/"+info.startedFollowingAt.Format("2006-01-02"))
+		ref := addr
+		if u := users.ResolveAddress(address(addr)); u != nil {
+			ref = u.Name()
 		}
+		nameAddrs = append(nameAddrs, ref+"/"+addr+"/"+info.startedFollowingAt.Format("2006-01-02"))
 		return false
 	})
 	sort.Strings(nameAddrs)
@@ -187,7 +195,7 @@ func (userPosts *UserPosts) RenderFollowing() string {
 		name := parts[0]
 		addr := parts[1]
 		since := parts[2]
-		str += " * [@" + name + "](/r/berty/social:" + name + ") since " + since +
+		str += " * [@" + name + "](" + gRealmPath + ":" + name + ") since " + since +
 			"  \\[[unfollow](" + userPosts.GetUnfollowFormURL(address(addr)) + ")]\n"
 	}
 

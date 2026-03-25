@@ -1,6 +1,6 @@
 module github.com/gnoverse/dsocial/tools/notification-service
 
-go 1.21.7
+go 1.24
 
 require (
 	buf.build/gen/go/gnolang/dsocial-indexer/connectrpc/go v1.17.0-20241114144551-3a1c1a1274a4.1

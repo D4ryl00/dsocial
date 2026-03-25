@@ -4,9 +4,8 @@ import (
 	"chain/runtime"
 	"strconv"
 
-	"gno.land/p/jefft0/avlhelpers"
-	"gno.land/p/nt/avl"
-	"gno.land/p/nt/ufmt"
+	"gno.land/p/nt/avl/v0"
+	"gno.land/p/nt/ufmt/v0"
 	"gno.land/r/sys/users"
 )
 
@@ -21,12 +20,7 @@ type UserAndPostID struct {
 // (This is similar to boards.CreateThread, but no message title)
 func PostMessage(_ realm, body string) PostID {
 	caller := runtime.OriginCaller()
-	name := usernameOf(caller)
-	if name == "" {
-		panic("please register")
-	}
-
-	userPosts := getOrCreateUserPosts(caller, name)
+	userPosts := getOrCreateUserPosts(caller, usernameOf(caller))
 	thread := userPosts.AddThread(body)
 	return thread.id
 }
@@ -39,9 +33,6 @@ func PostMessage(_ realm, body string) PostID {
 // (This is similar to boards.CreateReply.)
 func PostReply(_ realm, userPostsAddr address, threadid, postid PostID, body string) PostID {
 	caller := runtime.OriginCaller()
-	if usernameOf(caller) == "" {
-		panic("please register")
-	}
 	userPosts := getUserPosts(userPostsAddr)
 	if userPosts == nil {
 		panic("posts for userPostsAddr do not exist")
@@ -73,11 +64,7 @@ func RepostThread(_ realm, userPostsAddr address, threadid PostID, comment strin
 		panic("Cannot repost a user's own message")
 	}
 
-	name := usernameOf(caller)
-	if name == "" {
-		panic("please register")
-	}
-	dstUserPosts := getOrCreateUserPosts(caller, name)
+	dstUserPosts := getOrCreateUserPosts(caller, usernameOf(caller))
 
 	userPosts := getUserPosts(userPostsAddr)
 	if userPosts == nil {
@@ -226,28 +213,18 @@ func GetJsonHomePosts(userPostsAddr address, startIndex int, endIndex int) strin
 // Update the caller to follow the user with followedAddr. See UserPosts.Follow.
 func Follow(_ realm, followedAddr address) PostID {
 	caller := runtime.OriginCaller()
-	name := usernameOf(caller)
-	if name == "" {
-		panic("please register")
-	}
-
 	if followedAddr == caller {
 		panic("you can't follow yourself")
 	}
 
 	// A user can follow someone before doing any posts, so create the UserPosts if needed.
-	userPosts := getOrCreateUserPosts(caller, name)
+	userPosts := getOrCreateUserPosts(caller, usernameOf(caller))
 	return userPosts.Follow(followedAddr)
 }
 
 // Update the caller to unfollow the user with followedAddr. See UserPosts.Unfollow.
 func Unfollow(_ realm, followedAddr address) {
 	caller := runtime.OriginCaller()
-	name := usernameOf(caller)
-	if name == "" {
-		panic("please register")
-	}
-
 	userPosts := getUserPosts(caller)
 	if userPosts == nil {
 		// We don't expect this, but just do nothing.
@@ -265,9 +242,6 @@ func Unfollow(_ realm, followedAddr address) {
 // Return a boolean indicating whether the userAddr was added. See Post.AddReaction.
 func AddReaction(_ realm, userPostsAddr address, threadid, postid PostID, reaction Reaction) bool {
 	caller := runtime.OriginCaller()
-	if usernameOf(caller) == "" {
-		panic("please register")
-	}
 	userPosts := getUserPosts(userPostsAddr)
 	if userPosts == nil {
 		panic("posts for userPostsAddr do not exist")
@@ -295,9 +269,6 @@ func AddReaction(_ realm, userPostsAddr address, threadid, postid PostID, reacti
 // Return a boolean indicating whether the userAddr was removed. See Post.RemoveReaction.
 func RemoveReaction(_ realm, userPostsAddr address, threadid, postid PostID, reaction Reaction) bool {
 	caller := runtime.OriginCaller()
-	if usernameOf(caller) == "" {
-		panic("please register")
-	}
 	userPosts := getUserPosts(userPostsAddr)
 	if userPosts == nil {
 		panic("posts for userPostsAddr do not exist")
@@ -416,7 +387,7 @@ func GetJsonFollowing(address address, startIndex int, endIndex int) string {
 // Get a list of user names starting from the given prefix. Limit the
 // number of results to maxResults.
 func ListUsersByPrefix(prefix string, maxResults int) []string {
-	return avlhelpers.ListByteStringKeysByPrefix(&gUserAddressByName, prefix, maxResults)
+	return listByteStringKeysByPrefix(&gUserAddressByName, prefix, maxResults)
 }
 
 // Get a list of user names starting from the given prefix. Limit the

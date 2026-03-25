@@ -1,0 +1,78 @@
+name: Realm tests
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  realm-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout dsocial
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Checkout gnolang/gno
+        uses: actions/checkout@v4
+        with:
+          repository: gnolang/gno
+          # Pin to the gno version this realm was developed against.
+          # Update this ref when bumping gno compatibility.
+          ref: 2efd147d9124e29a57146913d93a3e1f983e083d
+          path: .gno
+
+      - name: Cache Go build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-gno-${{ hashFiles('.gno/go.sum', '.gno/contribs/gnodev/go.sum') }}
+          restore-keys: ${{ runner.os }}-go-gno-
+
+      - name: Install gnokey
+        working-directory: .gno
+        run: go install ./gno.land/cmd/gnokey
+
+      - name: Install gnodev
+        working-directory: .gno/contribs/gnodev
+        run: go install .
+
+      # The test1 key has a fixed address on every gnodev instance.
+      # We deploy the realm under that address so no namespace registration
+      # is required, and gnomod.toml matches the --pkgpath exactly.
+      - name: Patch gnomod.toml for CI
+        env:
+          TEST1_ADDR: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+        run: |
+          sed -i "s|module = \"gno.land/r/berty/social\"|module = \"gno.land/r/${TEST1_ADDR}/social\"|" realm/gnomod.toml
+
+      - name: Start gnodev
+        env:
+          GNOROOT: ${{ github.workspace }}/.gno
+        run: |
+          gnodev staging --no-web --no-watch realm/ > /tmp/gnodev.log 2>&1 &
+          echo $! > /tmp/gnodev.pid
+          # Wait up to 60s for the RPC endpoint to be ready
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:26657/status > /dev/null 2>&1 && break
+            sleep 1
+          done
+          curl -sf http://localhost:26657/status > /dev/null 2>&1 \
+            || { echo "gnodev did not start in time"; cat /tmp/gnodev.log; exit 1; }
+
+      - name: Run realm tests
+        env:
+          PKG_PATH: gno.land/r/g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5/social
+        run: ./realm/tests/test.sh
+
+      - name: Stop gnodev
+        if: always()
+        run: kill $(cat /tmp/gnodev.pid) 2>/dev/null || true

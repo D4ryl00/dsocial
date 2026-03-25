@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"strings"
 
-	"gno.land/p/nt/avl"
-	"gno.land/p/nt/ufmt"
+	"gno.land/p/nt/avl/v0"
+	"gno.land/p/nt/ufmt/v0"
 	"gno.land/r/sys/users"
 )
 
@@ -33,13 +33,13 @@ func getOrCreateUserPosts(userAddr address, username string) *UserPosts {
 	}
 
 	if username == "" {
-		username := usernameOf(userAddr)
-		if username == "" {
-			panic("no username for address " + userAddr.String())
-		}
+		username = usernameOf(userAddr)
+	}
+	if username == "" {
+		username = userAddr.String()
 	}
 
-	userPosts = newUserPosts("/r/berty/social:"+username, userAddr)
+	userPosts = newUserPosts(gRealmPath+":"+username, userAddr)
 	gUserPostsByAddress.Set(userAddr.String(), userPosts)
 	gUserAddressByName.Set(username, userAddr)
 
@@ -77,6 +77,27 @@ func getOrCreateReactionValue(reactions *avl.Tree, reaction Reaction) *avl.Tree 
 	}
 }
 
+// listByteStringKeysByPrefix returns up to maxResults keys from tree that start
+// with the given prefix, treating keys as byte strings (not Unicode runes).
+// Inlined from gno.land/p/jefft0/avlhelpers which is not yet deployed.
+func listByteStringKeysByPrefix(tree avl.ITree, prefix string, maxResults int) []string {
+	result := []string{}
+	end := ""
+	n := len(prefix)
+	for n > 0 {
+		if ascii := int(prefix[n-1]); ascii < 0xff {
+			end = prefix[0:n-1] + string(ascii+1)
+			break
+		}
+		n--
+	}
+	tree.Iterate(prefix, end, func(key string, value any) bool {
+		result = append(result, key)
+		return len(result) >= maxResults
+	})
+	return result
+}
+
 func indentBody(indent string, body string) string {
 	lines := strings.Split(body, "\n")
 	res := ""
@@ -107,7 +128,7 @@ func displayAddressMD(addr address) string {
 	if user == nil {
 		return "[" + addr.String() + "](/r/gnoland/users/v1:" + addr.String() + ")"
 	} else {
-		return "[@" + user.Name() + "](/r/berty/social:" + user.Name() + ")"
+		return "[@" + user.Name() + "](" + gRealmPath + ":" + user.Name() + ")"
 	}
 }
 
