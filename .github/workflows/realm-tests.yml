@@ -55,8 +55,10 @@ jobs:
           sed -i "s|module = \"gno.land/r/berty/social\"|module = \"gno.land/r/${TEST1_ADDR}/social\"|" realm/gnomod.toml
 
       - name: Start gnodev
+        env:
+          GNOROOT: ${{ github.workspace }}/.gno
         run: |
-          gnodev realm/ > /tmp/gnodev.log 2>&1 &
+          gnodev staging --no-web --no-watch realm/ > /tmp/gnodev.log 2>&1 &
           echo $! > /tmp/gnodev.pid
           # Wait up to 60s for the RPC endpoint to be ready
           for i in $(seq 1 60); do
