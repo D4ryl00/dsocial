@@ -45,6 +45,15 @@ jobs:
         working-directory: .gno/contribs/gnodev
         run: go install .
 
+      # The test1 key has a fixed address on every gnodev instance.
+      # We deploy the realm under that address so no namespace registration
+      # is required, and gnomod.toml matches the --pkgpath exactly.
+      - name: Patch gnomod.toml for CI
+        env:
+          TEST1_ADDR: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5
+        run: |
+          sed -i "s|module = \"gno.land/r/berty/social\"|module = \"gno.land/r/${TEST1_ADDR}/social\"|" realm/gnomod.toml
+
       - name: Start gnodev
         run: |
           gnodev realm/ > /tmp/gnodev.log 2>&1 &
@@ -58,6 +67,8 @@ jobs:
             || { echo "gnodev did not start in time"; cat /tmp/gnodev.log; exit 1; }
 
       - name: Run realm tests
+        env:
+          PKG_PATH: gno.land/r/g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5/social
         run: ./realm/tests/test.sh
 
       - name: Stop gnodev
