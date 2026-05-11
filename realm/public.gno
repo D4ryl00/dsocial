@@ -4,7 +4,7 @@ import (
 	"chain/runtime"
 	"strconv"
 
-	"gno.land/p/nt/avl/v0"
+	"gno.land/p/nt/bptree/v0"
 	"gno.land/p/nt/ufmt/v0"
 	"gno.land/r/sys/users"
 )
@@ -171,12 +171,12 @@ func GetHomePostsCount(userPostsAddr address) int {
 
 // Get home posts for a user, which are the user's top-level posts plus all posts of all
 // users being followed.
-// The response is a map of postID -> *Post. The avl.Tree sorts by the post ID which is
+// The response is a map of postID -> *Post. The bptree.BPTree sorts by the post ID which is
 // unique for every post and increases in time.
 // If you just want the total count, use GetHomePostsCount.
 // This returns the current state of the home posts (without need to pay gas). To include the
 // latest followed posts, call RefreshHomePosts.
-func GetHomePosts(userPostsAddr address) *avl.Tree {
+func GetHomePosts(userPostsAddr address) *bptree.BPTree {
 	userPosts := getUserPosts(userPostsAddr)
 	if userPosts == nil {
 		panic("posts for userPostsAddr do not exist")

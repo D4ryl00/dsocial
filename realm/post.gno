@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"gno.land/p/moul/txlink"
-	"gno.land/p/nt/avl/v0"
+	"gno.land/p/nt/bptree/v0"
 	"gno.land/p/nt/ufmt/v0"
 )
 
@@ -36,13 +36,13 @@ type Post struct {
 	id         PostID
 	creator    address
 	body       string
-	replies    avl.Tree  // PostID -> *Post
-	repliesAll avl.Tree  // PostID -> *Post (all replies, for top-level posts)
-	reposts    avl.Tree  // UserPosts user address -> PostID
-	threadID   PostID    // original PostID
-	parentID   PostID    // parent PostID (if reply or repost)
-	repostUser address   // UserPosts user address of original post (if repost)
-	reactions  *avl.Tree // Reaction -> *avl.Tree of address -> "" (Use the avl.Tree keys as the "set" of addresses)
+	replies    bptree.BPTree  // PostID -> *Post
+	repliesAll bptree.BPTree  // PostID -> *Post (all replies, for top-level posts)
+	reposts    bptree.BPTree  // UserPosts user address -> PostID
+	threadID   PostID         // original PostID
+	parentID   PostID         // parent PostID (if reply or repost)
+	repostUser address        // UserPosts user address of original post (if repost)
+	reactions  *bptree.BPTree // Reaction -> *bptree.BPTree of address -> "" (Use the bptree.BPTree keys as the "set" of addresses)
 	createdAt  time.Time
 }
 
@@ -52,13 +52,13 @@ func newPost(userPosts *UserPosts, id PostID, creator address, body string, thre
 		id:         id,
 		creator:    creator,
 		body:       body,
-		replies:    avl.Tree{},
-		repliesAll: avl.Tree{},
-		reposts:    avl.Tree{},
+		replies:    bptree.BPTree{},
+		repliesAll: bptree.BPTree{},
+		reposts:    bptree.BPTree{},
 		threadID:   threadID,
 		parentID:   parentID,
 		repostUser: repostUser,
-		reactions:  avl.NewTree(),
+		reactions:  bptree.NewBPTree32(),
 		createdAt:  time.Now(),
 	}
 }
@@ -153,7 +153,7 @@ func (post *Post) GetReactionCount(reaction Reaction) int {
 	key := reactionKey(reaction)
 	valueI, exists := post.reactions.Get(key)
 	if exists {
-		return valueI.(*avl.Tree).Size()
+		return valueI.(*bptree.BPTree).Size()
 	} else {
 		return 0
 	}
@@ -299,7 +299,7 @@ func (post *Post) MarshalJSON() ([]byte, error) {
 	return json.Bytes(), nil
 }
 
-func getPosts(posts avl.Tree, startIndex int, endIndex int) string {
+func getPosts(posts bptree.BPTree, startIndex int, endIndex int) string {
 	json := ufmt.Sprintf("{\"n_threads\": %d, \"posts\": [\n  ", posts.Size())
 
 	for i := startIndex; i < endIndex && i < posts.Size(); i++ {

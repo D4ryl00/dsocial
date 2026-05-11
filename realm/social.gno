@@ -5,12 +5,12 @@ import (
 
 	"chain/runtime"
 
-	"gno.land/p/nt/avl/v0"
+	"gno.land/p/nt/bptree/v0"
 )
 
 var (
-	gUserPostsByAddress avl.Tree // user's address -> *UserPosts
-	gUserAddressByName  avl.Tree // user's username -> address
+	gUserPostsByAddress bptree.BPTree // user's address -> *UserPosts
+	gUserAddressByName  bptree.BPTree // user's username -> address
 	postsCtr            uint64   // increments Post.id globally
 
 	// gRealmPath is the realm's relative URL path (e.g. "/r/g1.../social"),
