@@ -8,7 +8,7 @@ CHAIN_ID="${CHAIN_ID:-dev}"
 NODE_ADDR="${NODE_ADDR:-http://localhost:26657}"
 PKG_PATH="${PKG_PATH:-gno.land/r/berty/social}"
 GAS_FEE="${GAS_FEE:-1000000ugnot}"
-GAS_WANTED="${GAS_WANTED:-10000000}"
+GAS_WANTED="${GAS_WANTED:-50000000}"
 GNOKEY="${GNOKEY:-gnokey}"
 
 # ── Funder key (fixed — must exist on the chain with enough GNOT) ─────────────

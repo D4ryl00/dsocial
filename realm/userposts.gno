@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"gno.land/p/moul/txlink"
-	"gno.land/p/nt/avl/v0"
+	"gno.land/p/nt/bptree/v0"
 	"gno.land/p/nt/ufmt/v0"
 	"gno.land/r/sys/users"
 )
@@ -25,11 +25,11 @@ type FollowingInfo struct {
 type UserPosts struct {
 	url           string
 	userAddr      address
-	threads       avl.Tree // PostID -> *Post
-	homePosts     avl.Tree // PostID -> *Post. Includes this user's threads posts plus posts of users being followed.
-	lastRefreshId PostID   // Updated by refreshHomePosts
-	followers     avl.Tree // address -> ""
-	following     avl.Tree // address -> *FollowingInfo
+	threads       bptree.BPTree // PostID -> *Post
+	homePosts     bptree.BPTree // PostID -> *Post. Includes this user's threads posts plus posts of users being followed.
+	lastRefreshId PostID        // Updated by refreshHomePosts
+	followers     bptree.BPTree // address -> ""
+	following     bptree.BPTree // address -> *FollowingInfo
 }
 
 // Create a new userPosts for the user. Panic if there is already a userPosts for the user.
@@ -40,11 +40,11 @@ func newUserPosts(url string, userAddr address) *UserPosts {
 	return &UserPosts{
 		url:           url,
 		userAddr:      userAddr,
-		threads:       avl.Tree{},
-		homePosts:     avl.Tree{},
+		threads:       bptree.BPTree{},
+		homePosts:     bptree.BPTree{},
 		lastRefreshId: PostID(postsCtr), // Ignore past messages of followed users.
-		followers:     avl.Tree{},
-		following:     avl.Tree{},
+		followers:     bptree.BPTree{},
+		following:     bptree.BPTree{},
 	}
 }
 
@@ -127,7 +127,7 @@ func (userPosts *UserPosts) RenderUserPosts(includeFollowed bool) string {
 	}
 	str += "\n\n"
 
-	var posts *avl.Tree
+	var posts *bptree.BPTree
 	if includeFollowed {
 		posts = &userPosts.homePosts
 	} else {
@@ -232,7 +232,7 @@ func (userPosts *UserPosts) GetRefreshFormURL() string {
 }
 
 // Scan userPosts.following for all posts from all followed users starting from lastRefreshId+1 .
-// Add the posts to the homePosts avl.Tree, which is sorted by the post ID which is unique for every post and
+// Add the posts to the homePosts bptree.BPTree, which is sorted by the post ID which is unique for every post and
 // increases in time. When finished, update lastRefreshId.
 func (userPosts *UserPosts) refreshHomePosts() {
 	minStartKey := postIDKey(userPosts.lastRefreshId + 1)

@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gno.land/p/nt/avl/v0"
+	"gno.land/p/nt/bptree/v0"
 	"gno.land/p/nt/ufmt/v0"
 	"gno.land/r/sys/users"
 )
@@ -64,14 +64,14 @@ func reactionKey(reaction Reaction) string {
 }
 
 // If reactions has an value for the given reaction, then return it.
-// Otherwise, add the reaction key to reactions, set the value to an empty avl.Tree and return it.
-func getOrCreateReactionValue(reactions *avl.Tree, reaction Reaction) *avl.Tree {
+// Otherwise, add the reaction key to reactions, set the value to an empty bptree.BPTree and return it.
+func getOrCreateReactionValue(reactions *bptree.BPTree, reaction Reaction) *bptree.BPTree {
 	key := reactionKey(reaction)
 	valueI, exists := reactions.Get(key)
 	if exists {
-		return valueI.(*avl.Tree)
+		return valueI.(*bptree.BPTree)
 	} else {
-		value := avl.NewTree()
+		value := bptree.NewBPTree32()
 		reactions.Set(key, value)
 		return value
 	}
@@ -80,7 +80,7 @@ func getOrCreateReactionValue(reactions *avl.Tree, reaction Reaction) *avl.Tree 
 // listByteStringKeysByPrefix returns up to maxResults keys from tree that start
 // with the given prefix, treating keys as byte strings (not Unicode runes).
 // Inlined from gno.land/p/jefft0/avlhelpers which is not yet deployed.
-func listByteStringKeysByPrefix(tree avl.ITree, prefix string, maxResults int) []string {
+func listByteStringKeysByPrefix(tree bptree.ITree, prefix string, maxResults int) []string {
 	result := []string{}
 	end := ""
 	n := len(prefix)
