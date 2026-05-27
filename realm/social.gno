@@ -3,8 +3,6 @@ package social
 import (
 	"strings"
 
-	"chain/runtime"
-
 	"gno.land/p/nt/bptree/v0"
 )
 
@@ -18,8 +16,8 @@ var (
 	gRealmPath string
 )
 
-func init() {
-	pkgPath := runtime.CurrentRealm().PkgPath()
+func init(cur realm) {
+	pkgPath := cur.PkgPath()
 	// Strip the chain domain (everything before the first "/") to get the
 	// relative path suitable for markdown links: "/r/g1.../social".
 	if idx := strings.Index(pkgPath, "/"); idx >= 0 {

@@ -1,7 +1,6 @@
 package social
 
 import (
-	"chain/runtime"
 	"strconv"
 
 	"gno.land/p/nt/bptree/v0"
@@ -18,8 +17,8 @@ type UserAndPostID struct {
 // The caller must already be registered with /r/gnoland/users/v1 Register.
 // Return the "thread ID" of the new post.
 // (This is similar to boards.CreateThread, but no message title)
-func PostMessage(_ realm, body string) PostID {
-	caller := runtime.OriginCaller()
+func PostMessage(cur realm, body string) PostID {
+	caller := cur.Previous().Address()
 	userPosts := getOrCreateUserPosts(caller, usernameOf(caller))
 	thread := userPosts.AddThread(body)
 	return thread.id
@@ -31,8 +30,8 @@ func PostMessage(_ realm, body string) PostID {
 // The caller must already be registered with /r/gnoland/users/v1 Register.
 // Return the new post ID.
 // (This is similar to boards.CreateReply.)
-func PostReply(_ realm, userPostsAddr address, threadid, postid PostID, body string) PostID {
-	caller := runtime.OriginCaller()
+func PostReply(cur realm, userPostsAddr address, threadid, postid PostID, body string) PostID {
+	caller := cur.Previous().Address()
 	userPosts := getUserPosts(userPostsAddr)
 	if userPosts == nil {
 		panic("posts for userPostsAddr do not exist")
@@ -58,8 +57,8 @@ func PostReply(_ realm, userPostsAddr address, threadid, postid PostID, body str
 // the original call to PostMessage. This must be a top-level thread (not a reply).
 // Return the new post ID.
 // (This is similar to boards.CreateRepost.)
-func RepostThread(_ realm, userPostsAddr address, threadid PostID, comment string) PostID {
-	caller := runtime.OriginCaller()
+func RepostThread(cur realm, userPostsAddr address, threadid PostID, comment string) PostID {
+	caller := cur.Previous().Address()
 	if userPostsAddr == caller {
 		panic("Cannot repost a user's own message")
 	}
@@ -211,8 +210,8 @@ func GetJsonHomePosts(userPostsAddr address, startIndex int, endIndex int) strin
 }
 
 // Update the caller to follow the user with followedAddr. See UserPosts.Follow.
-func Follow(_ realm, followedAddr address) PostID {
-	caller := runtime.OriginCaller()
+func Follow(cur realm, followedAddr address) PostID {
+	caller := cur.Previous().Address()
 	if followedAddr == caller {
 		panic("you can't follow yourself")
 	}
@@ -223,8 +222,8 @@ func Follow(_ realm, followedAddr address) PostID {
 }
 
 // Update the caller to unfollow the user with followedAddr. See UserPosts.Unfollow.
-func Unfollow(_ realm, followedAddr address) {
-	caller := runtime.OriginCaller()
+func Unfollow(cur realm, followedAddr address) {
+	caller := cur.Previous().Address()
 	userPosts := getUserPosts(caller)
 	if userPosts == nil {
 		// We don't expect this, but just do nothing.
@@ -240,8 +239,8 @@ func Unfollow(_ realm, followedAddr address) {
 // (This function's arguments are similar to PostReply.)
 // The caller must already be registered with /r/gnoland/users/v1 Register.
 // Return a boolean indicating whether the userAddr was added. See Post.AddReaction.
-func AddReaction(_ realm, userPostsAddr address, threadid, postid PostID, reaction Reaction) bool {
-	caller := runtime.OriginCaller()
+func AddReaction(cur realm, userPostsAddr address, threadid, postid PostID, reaction Reaction) bool {
+	caller := cur.Previous().Address()
 	userPosts := getUserPosts(userPostsAddr)
 	if userPosts == nil {
 		panic("posts for userPostsAddr do not exist")
@@ -267,8 +266,8 @@ func AddReaction(_ realm, userPostsAddr address, threadid, postid PostID, reacti
 // (This function's arguments are similar to PostReply.)
 // The caller must already be registered with /r/gnoland/users/v1 Register.
 // Return a boolean indicating whether the userAddr was removed. See Post.RemoveReaction.
-func RemoveReaction(_ realm, userPostsAddr address, threadid, postid PostID, reaction Reaction) bool {
-	caller := runtime.OriginCaller()
+func RemoveReaction(cur realm, userPostsAddr address, threadid, postid PostID, reaction Reaction) bool {
+	caller := cur.Previous().Address()
 	userPosts := getUserPosts(userPostsAddr)
 	if userPosts == nil {
 		panic("posts for userPostsAddr do not exist")
