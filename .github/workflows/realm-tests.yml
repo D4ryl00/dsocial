@@ -25,7 +25,7 @@ jobs:
           repository: gnolang/gno
           # Pin to the gno version this realm was developed against.
           # Update this ref when bumping gno compatibility.
-          ref: 2efd147d9124e29a57146913d93a3e1f983e083d
+          ref: d8a351e7509ce945267b0d929ead44b981b4061b
           path: .gno
 
       - name: Cache Go build
